@@ -19,8 +19,9 @@ else:
 # Load user inputs
 user_inputs = {}
 if os.path.exists(user_inputs_file):
-    user_inputs_df = pd.read_csv(user_inputs_file, index_col=0)
-    user_inputs = user_inputs_df.iloc[0].to_dict()
+    user_inputs_df = pd.read_csv(user_inputs_file)
+    if not user_inputs_df.empty:
+        user_inputs = user_inputs_df.iloc[0].to_dict()
 
 def calculate_remaining_balance(current_money, daily_spending, current_day, total_days):
     # Calculate the remaining money after subtracting the daily spending for the rest of the month
@@ -88,7 +89,7 @@ if st.button('Reset'):
     # Reset user inputs
     user_inputs = {}
     user_inputs_df = pd.DataFrame(columns=["current_money", "daily_spending", "saving_goal"])
-    user_inputs_df.to_csv(user_inputs_file)
+    user_inputs_df.to_csv(user_inputs_file, index=False)
 
 if remaining_balance is not None:
     st.write(f"Your predicted remaining balance at the end of the month is: €{remaining_balance:.2f}")
