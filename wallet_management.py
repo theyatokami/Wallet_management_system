@@ -26,36 +26,39 @@ if os.path.exists(user_inputs_file):
 def calculate_remaining_balance(current_money, expenses, current_day, total_days):
     remaining_balances = []
     for day in range(current_day, total_days+1):
-        remaining_balance = current_money
+        daily_expense = 0
         for expense in expenses:
             if expense['frequency'] == 'daily':
-                remaining_balance -= expense['amount']
+                daily_expense += expense['amount']
             elif expense['frequency'] == 'weekly':
                 if (day - current_day) % 7 == 0:
-                    remaining_balance -= expense['amount']
+                    daily_expense += expense['amount']
             elif expense['frequency'] == 'monthly':
                 if day == int(expense['day']):
-                    remaining_balance -= expense['amount']
+                    daily_expense += expense['amount']
+        remaining_balance = current_money - daily_expense
         remaining_balances.append(remaining_balance)
-        current_money -= sum(expense['amount'] for expense in expenses if expense['frequency'] == 'daily')
+        current_money = remaining_balance
     return pd.DataFrame({"Day": np.arange(current_day, total_days+1), "Remaining Balance": remaining_balances})
 
 def calculate_money_evolution(current_money, expenses, current_day, total_days):
     remaining_balances = []
     for day in range(current_day, total_days+1):
-        remaining_balance = current_money
+        daily_expense = 0
         for expense in expenses:
             if expense['frequency'] == 'daily':
-                remaining_balance -= expense['amount']
+                daily_expense += expense['amount']
             elif expense['frequency'] == 'weekly':
                 if (day - current_day) % 7 == 0:
-                    remaining_balance -= expense['amount']
+                    daily_expense += expense['amount']
             elif expense['frequency'] == 'monthly':
                 if day == int(expense['day']):
-                    remaining_balance -= expense['amount']
+                    daily_expense += expense['amount']
+        remaining_balance = current_money - daily_expense
         remaining_balances.append(remaining_balance)
-        current_money -= sum(expense['amount'] for expense in expenses if expense['frequency'] == 'daily')
+        current_money = remaining_balance
     return pd.DataFrame({"Day": np.arange(current_day, total_days+1), "Remaining Balance": remaining_balances})
+
 
 st.title('Money Management System')
 
@@ -85,7 +88,9 @@ for i in range(int(num_expenses)):
     frequency = st.selectbox("Frequency", options=["daily", "weekly", "monthly"], key=f"frequency_{i}")
     amount = st.number_input("Amount", value=user_inputs.get(f"expense_amount_{i}", 0), key=f"amount_{i}")
     if frequency == "monthly":
-        day = st.number_input("Day of the month", min_value=1, max_value=31, value=int(user_inputs.get(f"expense_day_{i}", 1)), key=f"day_{i}")
+        day_value = user_inputs.get(f"expense_day_{i}", 1)
+        day = st.number_input("Day of the month", min_value=1, max_value=31, value=int(day_value) if pd.notna(day_value) else 1, key=f"day_{i}")
+
     else:
         day = None
     expenses.append({"name": name, "frequency": frequency, "amount": amount, "day": day})
@@ -147,14 +152,28 @@ if remaining_balance is not None:
 
 # Pie chart for expenses breakdown
 if expenses:
+    # Existing code
     expenses_df = pd.DataFrame(expenses)
     expenses_total = expenses_df['amount'].sum()
-    expenses_df['Percentage'] = (expenses_df['amount'] / expenses_total) * 100
+
+    # New code to calculate total amount for each expense
+    expenses_df['total_amount'] = np.where(expenses_df['frequency'] == 'daily', expenses_df['amount'] * 30,
+                                            np.where(expenses_df['frequency'] == 'weekly', expenses_df['amount'] * 4,
+                                                    expenses_df['amount']))
+
+    # Calculate new total for all expenses
+    expenses_total = expenses_df['total_amount'].sum()
+
+    # New code to calculate percentage based on total_amount
+    expenses_df['Percentage'] = (expenses_df['total_amount'] / expenses_total) * 100
+
     st.header("Expenses Breakdown")
     st.dataframe(expenses_df)
 
     labels = expenses_df['name']
     fig, ax = plt.subplots(figsize=(6, 6))
-    ax.pie(expenses_df['amount'].tolist(), labels=labels.tolist(), autopct='%1.1f%%')
+    # Use total_amount for the pie chart
+    ax.pie(expenses_df['total_amount'].tolist(), labels=labels.tolist(), autopct='%1.1f%%')
     ax.set_aspect('equal')
     st.pyplot(fig)
+
