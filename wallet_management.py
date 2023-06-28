@@ -40,6 +40,23 @@ def calculate_remaining_balance(current_money, expenses, current_day, total_days
         current_money -= sum(expense['amount'] for expense in expenses if expense['frequency'] == 'daily')
     return pd.DataFrame({"Day": np.arange(current_day, total_days+1), "Remaining Balance": remaining_balances})
 
+def calculate_money_evolution(current_money, expenses, current_day, total_days):
+    remaining_balances = []
+    for day in range(current_day, total_days+1):
+        remaining_balance = current_money
+        for expense in expenses:
+            if expense['frequency'] == 'daily':
+                remaining_balance -= expense['amount']
+            elif expense['frequency'] == 'weekly':
+                if (day - current_day) % 7 == 0:
+                    remaining_balance -= expense['amount']
+            elif expense['frequency'] == 'monthly':
+                if day == int(expense['day']):
+                    remaining_balance -= expense['amount']
+        remaining_balances.append(remaining_balance)
+        current_money -= sum(expense['amount'] for expense in expenses if expense['frequency'] == 'daily')
+    return pd.DataFrame({"Day": np.arange(current_day, total_days+1), "Remaining Balance": remaining_balances})
+
 st.title('Money Management System')
 
 # User inputs
@@ -57,12 +74,14 @@ remaining_balance = None  # Default value for remaining_balance
 
 # Expenses inputs
 st.header("Expenses")
-num_expenses = int(st.number_input("Number of Expenses", min_value=0, value=user_inputs.get("num_expenses", 0)))
+num_expenses = st.number_input("Number of Expenses", min_value=0.0, value=user_inputs.get("num_expenses", 0))
+
 
 expenses = []
-for i in range(num_expenses):
+for i in range(int(num_expenses)):
+
     st.subheader(f"Expense #{i+1}")
-    name = st.text_input("Name")
+    name = st.text_input("Name", key=f"name_{i}")
     frequency = st.selectbox("Frequency", options=["daily", "weekly", "monthly"], key=f"frequency_{i}")
     amount = st.number_input("Amount", value=user_inputs.get(f"expense_amount_{i}", 0), key=f"amount_{i}")
     if frequency == "monthly":
@@ -74,8 +93,11 @@ for i in range(num_expenses):
 # If the user has clicked the "Submit" button
 if st.button('Submit'):
     remaining_balance = calculate_remaining_balance(current_money, expenses, current_day, total_days)
-    new_row = pd.DataFrame({"Date": [now.strftime("%Y-%m-%d")], "Remaining Balance": [remaining_balance]})
+    new_row = pd.DataFrame({"Date": [now.strftime("%Y-%m-%d")], "Remaining Balance": [remaining_balance["Remaining Balance"].values[0]]})
+
+
     balance_history = pd.concat([balance_history, new_row], ignore_index=True)
+
     balance_history.to_csv(balance_history_file, index=False)
 
     # Save user inputs
@@ -90,16 +112,19 @@ if st.button('Submit'):
         user_inputs_df[f"expense_day_{i}"] = expense['day']
     user_inputs_df.to_csv(user_inputs_file, index=False)
 
-    # Display pile of money
-    money_bags = "💰" * int(remaining_balance / 100)  # One money bag emoji for each 100 euros
-    st.write(money_bags)
 
     # Display money evolution chart
     money_evolution_df = calculate_money_evolution(current_money, expenses, current_day, total_days)
     st.line_chart(money_evolution_df.set_index("Day"))
 
     # Display balance history chart
-    st.line_chart(balance_history.set_index("Date"))
+    st.line_chart(balance_history.set_index('Date'))
+    balance_history['Date'] = pd.to_datetime(balance_history['Date'])
+
+
+
+
+
 
 # If the user has clicked the "Reset" button
 if st.button('Reset'):
@@ -114,8 +139,11 @@ if st.button('Reset'):
     user_inputs_df.to_csv(user_inputs_file, index=False)
 
 if remaining_balance is not None:
-    st.write(f"Your predicted remaining balance at the end of the month is: €{remaining_balance:.2f}")
-    st.write(f"Your predicted disposable income at the end of the month is: €{(remaining_balance-saving_goal):.2f}")
+    st.write(f"Your predicted remaining balance at the end of the month is: €{remaining_balance['Remaining Balance'].iloc[0]:.2f}")
+
+
+    st.write(f"Your predicted disposable income at the end of the month is: €{(remaining_balance['Remaining Balance'].iloc[0] - saving_goal):.2f}")
+
 
 # Pie chart for expenses breakdown
 if expenses:
