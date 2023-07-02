@@ -43,7 +43,7 @@ def calculate_remaining_balance(current_money, expenses, current_day, total_days
 
 def calculate_money_evolution(current_money, expenses, current_day, total_days):
     remaining_balances = []
-    for day in range(current_day, total_days+1):
+    for day in range(current_day, total_days + 1):
         daily_expense = 0
         for expense in expenses:
             if expense['frequency'] == 'daily':
@@ -57,7 +57,7 @@ def calculate_money_evolution(current_money, expenses, current_day, total_days):
         remaining_balance = current_money - daily_expense
         remaining_balances.append(remaining_balance)
         current_money = remaining_balance
-    return pd.DataFrame({"Day": np.arange(current_day, total_days+1), "Remaining Balance": remaining_balances})
+    return pd.DataFrame({"Day": np.arange(current_day, total_days + 1), "Remaining Balance": remaining_balances})
 
 
 st.title('Money Management System')
@@ -97,7 +97,7 @@ for i in range(int(num_expenses)):
 
 # If the user has clicked the "Submit" button
 if st.button('Submit'):
-    remaining_balance = calculate_remaining_balance(current_money, expenses, current_day, total_days)
+    remaining_balance = calculate_money_evolution(current_money, expenses, current_day, total_days)
     new_row = pd.DataFrame({"Date": [now.strftime("%Y-%m-%d")], "Remaining Balance": [remaining_balance["Remaining Balance"].values[0]]})
 
 
@@ -144,11 +144,8 @@ if st.button('Reset'):
     user_inputs_df.to_csv(user_inputs_file, index=False)
 
 if remaining_balance is not None:
-    st.write(f"Your predicted remaining balance at the end of the month is: €{remaining_balance['Remaining Balance'].iloc[0]:.2f}")
-
-
-    st.write(f"Your predicted disposable income at the end of the month is: €{(remaining_balance['Remaining Balance'].iloc[0] - saving_goal):.2f}")
-
+    st.write(f"Your remaining balance at the end of the month will be: €{remaining_balance['Remaining Balance'].iloc[-1]:.2f}")
+    st.write(f"Your disposable income at the end of the month will be: €{(remaining_balance['Remaining Balance'].iloc[-1] - saving_goal):.2f}")
 
 # Pie chart for expenses breakdown
 if expenses:
