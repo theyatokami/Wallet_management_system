@@ -18,11 +18,19 @@ else:
 
 # Load user inputs
 user_inputs = {}
+expenses = []
 if os.path.exists(user_inputs_file):
     user_inputs_df = pd.read_csv(user_inputs_file)
     if not user_inputs_df.empty:
         user_inputs = user_inputs_df.iloc[0].to_dict()
-
+        for i in range(int(user_inputs.get("num_expenses", 0))):
+            expenses.append({
+                "name": user_inputs.get(f"expense_name_{i}", ""),
+                "frequency": user_inputs.get(f"expense_frequency_{i}", ""),
+                "amount": user_inputs.get(f"expense_amount_{i}", 0),
+                "day": user_inputs.get(f"expense_day_{i}", 0),
+            })
+            
 def calculate_remaining_balance(current_money, expenses, current_day, total_days):
     remaining_balances = []
     for day in range(current_day, total_days+1):
@@ -113,6 +121,7 @@ if st.button('Submit'):
     })
     for i, expense in enumerate(expenses):
         user_inputs_df[f"expense_name_{i}"] = expense['name']
+        user_inputs_df[f"expense_frequency_{i}"] = expense['frequency']
         user_inputs_df[f"expense_amount_{i}"] = expense['amount']
         user_inputs_df[f"expense_day_{i}"] = expense['day']
     user_inputs_df.to_csv(user_inputs_file, index=False)
