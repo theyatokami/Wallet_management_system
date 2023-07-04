@@ -39,6 +39,7 @@ if os.path.exists(user_inputs_file):
                 "day": user_inputs.get(f"income_day_{i}", 0),
             })
 
+
 def calculate_money_evolution(current_money, expenses, incomes, current_day, total_days):
     remaining_balances = []
     for day in range(current_day, total_days + 1):
@@ -82,40 +83,51 @@ current_day = now.day
 total_days = 30
 
 remaining_balance = None  # Default value for remaining_balance
-# Incomes inputs
-st.header("Incomes")
-num_incomes = st.number_input("Number of Incomes", min_value=0, max_value=None, value=int(user_inputs.get("num_incomes", 0)))
 
-incomes = []
-for i in range(num_incomes):
-    st.subheader(f"Income #{i+1}")
-    name = st.text_input("Name", value=user_inputs.get(f"income_name_{i}", ""), key=f"income_name_{i}")
-    frequency = st.selectbox("Frequency", options=["daily", "weekly", "monthly"], index=["daily", "weekly", "monthly"].index(user_inputs.get(f"income_frequency_{i}", "monthly")), key=f"income_frequency_{i}")
-    amount = st.number_input("Amount", value=user_inputs.get(f"income_amount_{i}", 0.0), step=1.0, format="%.2f", key=f"income_amount_{i}")
-    if frequency == "monthly":
-        day_value = user_inputs.get(f"income_day_{i}", 1)
-        day = st.number_input("Day of the month", min_value=1, max_value=31, value=int(day_value) if pd.notna(day_value) else 1, key=f"income_day_{i}")
-    else:
-        day = None
-    incomes.append({"name": name, "frequency": frequency, "amount": amount, "day": day})
+# Set layout for 16:9 ratio screen
+col1, col2 = st.columns(2)
+
+# Incomes inputs
+with col1:
+    st.markdown("---")
+    st.header("Incomes")
+    st.markdown("<style>h2 {color: green;}</style>", unsafe_allow_html=True)  # Change header color to green
+    num_incomes = st.number_input("Number of Incomes", min_value=0, max_value=None, value=int(user_inputs.get("num_incomes", 0)))
+
+    incomes = []
+    for i in range(num_incomes):
+        st.subheader(f"Income #{i+1}")
+        name = st.text_input("Name", value=user_inputs.get(f"income_name_{i}", ""), key=f"income_name_{i}")
+        frequency = st.selectbox("Frequency", options=["daily", "weekly", "monthly"], index=["daily", "weekly", "monthly"].index(user_inputs.get(f"income_frequency_{i}", "monthly")), key=f"income_frequency_{i}")
+        amount = st.number_input("Amount", value=user_inputs.get(f"income_amount_{i}", 0.0), step=1.0, format="%.2f", key=f"income_amount_{i}")
+        if frequency == "monthly":
+            day_value = user_inputs.get(f"income_day_{i}", 1)
+            day = st.number_input("Day of the month", min_value=1, max_value=31, value=int(day_value) if pd.notna(day_value) else 1, key=f"income_day_{i}")
+        else:
+            day = None
+        incomes.append({"name": name, "frequency": frequency, "amount": amount, "day": day})
 
 # Expenses inputs
-st.header("Expenses")
-num_expenses = st.number_input("Number of Expenses", min_value=0, max_value=None, value=int(user_inputs.get("num_expenses", 0)))
+with col2:
+    st.markdown("---")
+    st.header("Expenses")
+    st.markdown("<style>h2 {color: red;}</style>", unsafe_allow_html=True)  # Change header color to red
+    num_expenses = st.number_input("Number of Expenses", min_value=0, max_value=None, value=int(user_inputs.get("num_expenses", 0)))
 
-expenses = []
-for i in range(num_expenses):
-    st.subheader(f"Expense #{i+1}")
-    name = st.text_input("Name", value=user_inputs.get(f"expense_name_{i}", ""), key=f"expense_name_{i}")
-    frequency = st.selectbox("Frequency", options=["daily", "weekly", "monthly"], index=["daily", "weekly", "monthly"].index(user_inputs.get(f"expense_frequency_{i}", "daily")), key=f"expense_frequency_{i}")
+    expenses = []
+    for i in range(num_expenses):
+        st.subheader(f"Expense #{i+1}")
+        name = st.text_input("Name", value=user_inputs.get(f"expense_name_{i}", ""), key=f"expense_name_{i}")
+        frequency = st.selectbox("Frequency", options=["daily", "weekly", "monthly"], index=["daily", "weekly", "monthly"].index(user_inputs.get(f"expense_frequency_{i}", "daily")), key=f"expense_frequency_{i}")
 
-    amount = st.number_input("Amount", value=user_inputs.get(f"expense_amount_{i}", 0.0), step=1.0, format="%.2f", key=f"expense_amount_{i}")
-    if frequency == "monthly":
-        day_value = user_inputs.get(f"expense_day_{i}", 1)
-        day = st.number_input("Day of the month", min_value=1, max_value=31, value=int(day_value) if pd.notna(day_value) else 1, key=f"expense_day_{i}")
-    else:
-        day = None
-    expenses.append({"name": name, "frequency": frequency, "amount": amount, "day": day})
+        amount = st.number_input("Amount", value=user_inputs.get(f"expense_amount_{i}", 0.0), step=1.0, format="%.2f", key=f"expense_amount_{i}")
+        if frequency == "monthly":
+            day_value = user_inputs.get(f"expense_day_{i}", 1)
+            day = st.number_input("Day of the month", min_value=1, max_value=31, value=int(day_value) if pd.notna(day_value) else 1, key=f"expense_day_{i}")
+        else:
+            day = None
+        expenses.append({"name": name, "frequency": frequency, "amount": amount, "day": day})
+
 # If the user has clicked the "Submit" button
 if st.button('Submit'):
     remaining_balance = calculate_money_evolution(current_money, expenses, incomes, current_day, total_days)
@@ -154,8 +166,6 @@ if st.button('Submit'):
 
 
 
-
-
 # If the user has clicked the "Reset" button
 if st.button('Reset'):
     current_money = 0
@@ -168,9 +178,11 @@ if st.button('Reset'):
     user_inputs_df = pd.DataFrame(columns=["current_money", "saving_goal", "num_expenses"])
     user_inputs_df.to_csv(user_inputs_file, index=False)
 
+
 if remaining_balance is not None:
     st.write(f"Your remaining balance at the end of the month will be: €{remaining_balance['Remaining Balance'].iloc[-1]:.2f}")
     st.write(f"Your disposable income at the end of the month will be: €{(remaining_balance['Remaining Balance'].iloc[-1] - saving_goal):.2f}")
+
 
 
 # Pie chart for expenses breakdown
