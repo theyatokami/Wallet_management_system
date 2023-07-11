@@ -91,7 +91,7 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("---")
     st.header("Incomes")
-    st.markdown("<style>h2 {color: green;}</style>", unsafe_allow_html=True)  # Change header color to green
+    st.markdown("<style>h2 {color: red;}</style>", unsafe_allow_html=True)  # Change header color to green
     num_incomes = st.number_input("Number of Incomes", min_value=0, max_value=None, value=int(user_inputs.get("num_incomes", 0)))
 
     incomes = []
