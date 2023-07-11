@@ -160,8 +160,9 @@ if st.button('Submit'):
     st.line_chart(money_evolution_df.set_index("Day"))
 
     # Display balance history chart
-    st.line_chart(balance_history.set_index('Date'))
-    balance_history['Date'] = pd.to_datetime(balance_history['Date'])
+    balance_history = balance_history.sort_values('Date')  # Sort DataFrame by 'Date'
+    st.line_chart(balance_history.set_index('Date').sort_index())  # Use sorted DataFrame as data source
+
 
 
 
